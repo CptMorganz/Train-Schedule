@@ -44,10 +44,10 @@ $("#add-train-btn").on("click", function(event) {
   database.ref().push(newTrain);
 
   // Logs everything to console
-  console.log(newTrain.name);
-  console.log(newTrain.destination);
-  console.log(newTrain.start);
-  console.log(newTrain.frequency);
+  // console.log(newTrain.name);
+  // console.log(newTrain.destination);
+  // console.log(newTrain.start);
+  // console.log(newTrain.frequency);
 
   // Clears all of the text-boxes
   $("#train-name-input").val("");
@@ -74,50 +74,31 @@ database.ref().on("child_added", function(childSnapshot, prevChildKey) {
   // console.log(firstDepart);
   // console.log(trainFrequency);
 
-  // Calculate the next train arrival time
-  var oldTime = firstDepart;
-  // console.log(oldTime);
+  // First Time (pushed back 1 year to make sure it comes before current time)
+  var firstTimeConverted = moment(firstDepart, "hh:mm").subtract(1, "years");
+  console.log(firstTimeConverted);
 
-  oldTime = oldTime.split(':');
-  var hours = Number(oldTime[0]);
-  var minutes = Number(oldTime[1]);
+  // Current Time
+  var currentTime = moment();
+  console.log("CURRENT TIME: " + moment(currentTime).format("hh:mm"));
 
-  // console.log(hours);
-  // console.log(minutes);
+  // Difference between the times
+  var diffTime = moment().diff(moment(firstTimeConverted), "minutes");
+  console.log("DIFFERENCE IN TIME: " + diffTime);
 
-  // Holders for the arrival hours and minutes
-  var nxtArrival, arrivalHr, arrivalMin;
+  // Time apart (remainder)
+  var tRemainder = diffTime % trainFrequency;
+  console.log(tRemainder);
 
-  // Converting and calculating the arrival time using the military time given and frequency
-  var convertHr;
-  var convertMin = minutes + trainFrequency;
-  if (convertMin > 59) {
-    convertHr = hours + Math.floor(convertMin/60);
-    if (convertHr > 23) {
-      arrivalHr = convertHr % 24;
-    } else {
-      arrivalHr = convertHr;
-    }
-    arrivalMin = convertMin % 60;
-  } else {
-    arrivalMin = convertMin;
-  }
+  // Minute Until Train
+  var minAway = trainFrequency - tRemainder;
+  console.log("MINUTES TILL TRAIN: " + minAway);
 
-  console.log(arrivalHr);
+  // Next Train
+  var nextTrain = moment().add(minAway, "minutes");
+  console.log("ARRIVAL TIME: " + moment(nextTrain).format("LT"));
 
-  if (arrivalHr > 0 && arrivalHr <= 12) {
-    nxtArrival = "" + arrivalHr;
-  } else if (arrivalHr > 12) {
-    nxtArrival = "" + (arrivalHr - 12);
-  } else if (arrivalHr == 0) {
-    nxtArrival = "12";
-  }
-   
-  nxtArrival += (arrivalMin < 10) ? ":0" + arrivalMin : ":" + arrivalMin;  // get minutes
-  nxtArrival += (arrivalHr >= 12) ? " P.M." : " A.M.";  // get AM/PM
-
-  // Calculate the time from first departure and frequency to determine arrival time.
-  var minAway = "Until it gets here";
+  var nxtArrival = moment(nextTrain).format("LT");
 
   // Add each train's data into the table
   $("#train-table > tbody").append("<tr><td>" + trainName + "</td><td>" + trainDestination + "</td><td>" +
